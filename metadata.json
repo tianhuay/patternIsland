@@ -1,0 +1,7 @@
+{
+  "name": "Pattern Pals: Adventure Island",
+  "description": "A fun, interactive educational game designed for 7-year-olds to learn and master pattern recognition through engaging puzzles and a friendly mascot guide.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
