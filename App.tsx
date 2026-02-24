@@ -8,9 +8,9 @@ import {
   Lightbulb,
   Layers,
   Crown,
+  Medal,
   Flame,
-  Zap,
-  Medal
+  Zap
 } from 'lucide-react';
 import confetti from 'https://cdn.skypack.dev/canvas-confetti';
 
@@ -34,11 +34,55 @@ const RANKS = [
   { title: 'Pattern Master', minXp: 3200 }
 ];
 
-const BADGE_LABELS: Record<string, string> = {
-  first_boss: 'First Boss Win',
-  streak_10: 'Streak x10',
-  speedster: 'Lightning Solver',
-  perfectionist: 'Perfect x20'
+const BADGE_CONFIG: Record<string, { label: string; icon: any; colors: { fill: string; stroke: string; icon: string } }> = {
+  first_boss: { 
+    label: 'First Boss Win', 
+    icon: Crown, 
+    colors: { fill: '#9d73cb', stroke: '#614187', icon: '#ffffff' } // Purple
+  },
+  streak_10: { 
+    label: 'Streak x10', 
+    icon: Flame, 
+    colors: { fill: '#f18a1a', stroke: '#a85308', icon: '#ffffff' } // Orange
+  },
+  speedster: { 
+    label: 'Lightning Solver', 
+    icon: Zap, 
+    colors: { fill: '#1fb0d3', stroke: '#0f7694', icon: '#ffffff' } // Blue
+  },
+  perfectionist: { 
+    label: 'Perfect x20', 
+    icon: Star, 
+    colors: { fill: '#4ab764', stroke: '#247d3d', icon: '#ffffff' } // Green
+  }
+};
+
+const HexagonBadge = ({ badgeKey }: { badgeKey: string }) => {
+  const config = BADGE_CONFIG[badgeKey];
+  if (!config) return null;
+  const Icon = config.icon;
+  
+  return (
+    <div className="flex flex-col items-center gap-2 group" title={config.label}>
+      <div className="w-16 h-16 relative flex items-center justify-center transform transition-transform group-hover:scale-110 group-hover:-translate-y-1">
+        <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full drop-shadow-md">
+          <polygon 
+            points="50 4, 89.8 27, 89.8 73, 50 96, 10.2 73, 10.2 27" 
+            fill={config.colors.fill} 
+            stroke={config.colors.stroke} 
+            strokeWidth="8" 
+            strokeLinejoin="round" 
+          />
+        </svg>
+        <div className="relative z-10">
+          <Icon size={28} color={config.colors.icon} strokeWidth={2.5} />
+        </div>
+      </div>
+      <span className="text-[11px] font-black tracking-wide text-slate-600 max-w-[5.5rem] text-center leading-tight uppercase">
+        {config.label}
+      </span>
+    </div>
+  );
 };
 
 const getTodayKey = () => new Date().toISOString().slice(0, 10);
@@ -101,36 +145,36 @@ const HomeScreen: React.FC<{ stats: UserStats; onStart: (levelId: number) => voi
   const currentRankFloor = currentRank.minXp;
   const nextRankCeiling = nextRank?.minXp ?? currentRankFloor + 600;
   const rankProgress = Math.max(0, Math.min(100, Math.round(((stats.xp - currentRankFloor) / (nextRankCeiling - currentRankFloor)) * 100)));
-  const quests = [
-    { id: 'q1', label: 'Complete 5 levels today', progress: stats.daily.completedToday, goal: 5 },
-    { id: 'q2', label: 'Reach streak x5', progress: Math.min(stats.streak, 5), goal: 5 },
-    { id: 'q3', label: 'Beat 1 boss level today', progress: stats.daily.bossesToday, goal: 1 }
-  ];
-  const badges = stats.badges.slice(0, 4);
+  const badges = stats.badges.slice(0, 3);
+  const dailyMission = {
+    label: 'Today: complete 5 levels',
+    progress: stats.daily.completedToday,
+    goal: 5
+  };
+  const missionPercent = Math.min(100, Math.round((dailyMission.progress / dailyMission.goal) * 100));
 
   return (
     <div className="flex flex-col items-center h-full w-full bg-blue-50 overflow-y-auto pb-32 no-scrollbar">
-      <motion.div 
+      <motion.div
         initial={{ y: -30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         className="text-center mt-12 mb-8 px-4 flex-shrink-0 w-full max-w-4xl"
       >
-        <div className="flex justify-center gap-6 mb-6">
-          <div className="bg-white px-8 py-3 rounded-full shadow-lg flex items-center gap-3 border-2 border-yellow-100">
-            <Star className="text-yellow-400 fill-yellow-400" size={24} />
-            <span className="font-black text-2xl text-slate-700">{stats.stars}</span>
+        <h1 className="text-7xl font-black text-blue-600 mb-6 tracking-tighter drop-shadow-sm">Pattern Island</h1>
+
+        <div className="grid md:grid-cols-2 gap-4 mb-6">
+          <div className="bg-white px-6 py-4 rounded-3xl shadow-lg flex items-center justify-between gap-4 border-2 border-yellow-100">
+            <span className="flex items-center gap-2 font-black text-slate-700">
+              <Star className="text-yellow-400 fill-yellow-400" size={20} />
+              Stars
+            </span>
+            <span className="font-black text-2xl text-slate-800">{stats.stars}</span>
           </div>
-          <div className="bg-white px-8 py-3 rounded-full shadow-lg flex items-center gap-3 border-2 border-violet-100">
-            <Zap className="text-violet-500" size={24} />
-            <span className="font-black text-2xl text-slate-700">{stats.xp} XP</span>
-          </div>
-          <div className="bg-white px-8 py-3 rounded-full shadow-lg flex items-center gap-3 border-2 border-blue-100">
-            <Trophy className="text-blue-500" size={24} />
-            <span className="font-black text-2xl text-slate-700">{completedLevelsCount}/{totalLevels}</span>
+          <div className="bg-white px-6 py-4 rounded-3xl shadow-lg flex items-center justify-between gap-4 border-2 border-orange-100">
+            <span className="font-black text-slate-700">Best Streak</span>
+            <span className="font-black text-2xl text-orange-600">{stats.bestStreak}</span>
           </div>
         </div>
-        
-        <h1 className="text-7xl font-black text-blue-600 mb-4 tracking-tighter drop-shadow-sm">Pattern Island</h1>
 
         <div className="bg-violet-50 p-6 rounded-[2rem] border-4 border-violet-100 shadow-lg mb-8">
           <div className="flex justify-between items-center mb-2 gap-8">
@@ -150,68 +194,26 @@ const HomeScreen: React.FC<{ stats: UserStats; onStart: (levelId: number) => voi
             />
           </div>
         </div>
-        
-        {/* Global Progress Dashboard */}
-        <div className="bg-white p-8 rounded-[3rem] shadow-2xl border-4 border-white mb-12 flex flex-col items-center">
-           <div className="flex justify-between items-center w-full mb-4 px-4">
-             <div className="flex items-center gap-2">
-               <Trophy className="text-blue-500" size={20} />
-               <span className="font-bold text-slate-500 uppercase tracking-widest text-sm">Overall Mastery</span>
-             </div>
-             <span className="font-black text-blue-600 text-xl">{completedLevelsCount} / {totalLevels} SOLVED</span>
-           </div>
-           <div className="w-full bg-slate-100 h-8 rounded-full overflow-hidden border-2 border-slate-50 relative">
-             <motion.div 
-              initial={{ width: 0 }}
-              animate={{ width: `${progressPercent}%` }}
-              className="h-full bg-gradient-to-r from-blue-400 to-blue-600"
-             />
-             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <span className="text-xs font-black text-blue-900 mix-blend-overlay">{progressPercent}% EXPLORED</span>
-             </div>
-           </div>
-        </div>
 
-        <div className="grid md:grid-cols-3 gap-4 w-full mb-8">
-          {quests.map((quest) => {
-            const pct = Math.min(100, Math.round((quest.progress / quest.goal) * 100));
-            const done = quest.progress >= quest.goal;
-            return (
-              <div key={quest.id} className={`rounded-3xl border-4 p-5 text-left ${done ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-100'}`}>
-                <p className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-1">Daily Quest</p>
-                <p className="font-black text-slate-700 mb-3">{quest.label}</p>
-                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-2">
-                  <div style={{ width: `${pct}%` }} className={`h-full ${done ? 'bg-emerald-400' : 'bg-blue-400'}`} />
-                </div>
-                <p className="text-sm font-bold text-slate-500">{Math.min(quest.progress, quest.goal)} / {quest.goal}</p>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-4 w-full mb-6">
-          <div className="bg-white border-4 border-orange-100 rounded-3xl p-5">
-            <p className="text-xs font-bold tracking-widest uppercase text-orange-400 mb-2">Personal Bests</p>
-            <div className="flex items-center justify-between text-slate-700 font-black">
-              <span className="flex items-center gap-2"><Flame size={18} className="text-orange-500" /> Best Streak</span>
-              <span>{stats.bestStreak}</span>
-            </div>
-            <div className="flex items-center justify-between text-slate-700 font-black mt-2">
-              <span>Fastest Solve</span>
-              <span>{stats.fastestSolveMs !== null ? `${(stats.fastestSolveMs / 1000).toFixed(1)}s` : '--'}</span>
-            </div>
+        <div className="bg-white p-6 rounded-[2rem] shadow-xl border-4 border-white mb-8 text-left">
+          <div className="flex items-center justify-between mb-3">
+            <p className="font-black text-slate-700">Daily Mission</p>
+            <p className="font-black text-emerald-600">{Math.min(dailyMission.progress, dailyMission.goal)} / {dailyMission.goal}</p>
           </div>
-          <div className="bg-white border-4 border-yellow-100 rounded-3xl p-5">
-            <p className="text-xs font-bold tracking-widest uppercase text-yellow-500 mb-2">Badges</p>
-            <div className="flex flex-wrap gap-2">
-              {badges.length > 0 ? badges.map((badge) => (
-                <span key={badge} className="px-3 py-1 rounded-full bg-yellow-50 border-2 border-yellow-200 text-yellow-700 font-bold text-sm">
-                  {BADGE_LABELS[badge] || badge}
-                </span>
-              )) : (
-                <span className="text-slate-400 font-semibold">Earn your first badge!</span>
-              )}
-            </div>
+          <p className="text-slate-500 font-semibold mb-3">{dailyMission.label}</p>
+          <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden">
+            <div style={{ width: `${missionPercent}%` }} className="h-full bg-emerald-400" />
+          </div>
+        </div>
+
+        <div className="bg-white border-4 border-yellow-100 rounded-3xl p-5 mb-6 w-full max-w-lg mx-auto">
+          <p className="text-xs font-bold tracking-widest uppercase text-yellow-500 mb-4 text-center">Recent Badges</p>
+          <div className="flex flex-wrap gap-6 justify-center">
+            {badges.length > 0 ? badges.map((badge) => (
+              <HexagonBadge key={badge} badgeKey={badge} />
+            )) : (
+              <span className="text-slate-400 font-semibold mb-2">Earn your first badge!</span>
+            )}
           </div>
         </div>
       </motion.div>
@@ -342,7 +344,7 @@ const GameScreen: React.FC<{ level: Level; onBack: () => void; onComplete: (resu
   };
 
   return (
-    <div className="min-h-screen w-screen bg-white flex flex-col overflow-y-auto relative no-scrollbar">
+    <div className="h-dvh min-h-dvh w-screen bg-white flex flex-col overflow-y-auto overscroll-y-contain touch-pan-y relative no-scrollbar">
       {/* Background Decor */}
       <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none -z-0">
         <div className="grid grid-cols-12 h-full w-full">
@@ -388,14 +390,14 @@ const GameScreen: React.FC<{ level: Level; onBack: () => void; onComplete: (resu
       </div>
 
       {/* Main Stage */}
-      <div className="flex-1 flex flex-col items-center justify-center relative w-full px-4 py-12 z-10">
+      <div className="flex-1 flex flex-col items-center justify-center relative w-full px-4 py-12 pb-28 md:pb-20 z-10">
         <motion.div
           key={level.id}
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full flex flex-col items-center gap-12"
+          className="w-full flex flex-col items-center gap-6"
         >
-          <h2 className="text-5xl md:text-7xl font-black text-slate-800 text-center drop-shadow-sm max-w-[90vw]">
+          <h2 className="text-5xl md:text-[64px] font-black text-slate-800 text-center drop-shadow-sm max-w-[90vw]">
             {level.instruction}
           </h2>
 
@@ -407,7 +409,7 @@ const GameScreen: React.FC<{ level: Level; onBack: () => void; onComplete: (resu
                 exit={{ opacity: 0, scale: 0.9 }}
                 className="bg-yellow-50 border-4 border-yellow-200 p-6 rounded-3xl shadow-xl max-w-2xl text-center"
               >
-                <p className="text-2xl font-black text-yellow-800 italic">"{hint}"</p>
+                <p className="text-xl md:text-2xl font-black text-yellow-800 italic">"{hint}"</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -448,7 +450,7 @@ const GameScreen: React.FC<{ level: Level; onBack: () => void; onComplete: (resu
           </div>
 
           {/* User Options */}
-          <div className="flex gap-12 flex-wrap justify-center items-center mt-4 mb-20">
+          <div className="flex gap-8 md:gap-12 flex-wrap justify-center items-center mt-4 mb-24 md:mb-20">
             {level.options.map((option, idx) => (
               <motion.div 
                 key={option.id}
@@ -573,7 +575,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="w-screen h-screen font-sans select-none overflow-hidden bg-blue-50">
+    <div className="w-screen h-dvh min-h-dvh font-sans select-none overflow-x-hidden bg-blue-50">
       <AnimatePresence mode="wait">
         {view === 'home' && (
           <motion.div 
